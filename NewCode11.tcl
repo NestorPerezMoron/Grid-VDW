@@ -19,11 +19,7 @@ set SystemPSF ionMHC.psf;					#psf file of system
 set SystemPDB ionMHC.pdb;					#pdb file of system
 set SystemDCD backup03.dcd;					#dcd file of equilibration
 
-
-#Running
-#set GridType O;			#Type of grid				
 set Output MHC;							#Output Name
-
 
 #The segment of frame created by core are specify in List.log
 set FileCore [open List.log r];
@@ -40,13 +36,10 @@ while {[gets $FileCore line] != -1} {
 close $FileCore
 unset Data FileCore
 
-
-###
 ######################### Grid Parameters #####################
 #Parameters specify in a dx file
-#(111*111*177)/3=entero       ===============================
-set GridPoints {111 111 177};					#Points in each axes[111 111 177]
-set GridOrigin {88.589 -2.76 -61.669};			
+set GridPoints {111 111 177};
+set GridOrigin {88.589 -2.76 -61.669};
 set GridDeltaX { 0.9 0 0 };
 set GridDeltaY { 0 0.9 0 };
 set GridDeltaZ { 0 0 0.9 };
@@ -54,12 +47,7 @@ set GridNumbers [expr 1*[lindex $GridPoints 1]*[lindex $GridPoints 2]];
 
 #Imaginary value, related to position
 set GridID { 0 0 0 };						
-
-
-########################### Divide frames #########################
-
 set TotalPoints $GridNumbers
-
 
 #Atomtype -> Particle used to establish de VDW energy (Epsilon, Rmin)
 #The parameters of each atom must be especify in dir 01_parameters
@@ -71,25 +59,22 @@ set AtomPDB Particle.$Atomtype.pdb;
 
 ############ New Files ##############
 
+#Verify if the System with the atom exists
 set CreateCond [file exists ../SysAtm.$Frame.pdb]
 
 if { $CreateCond == 0 } {
 	#Create workspace
-	set SystemAtom [ JoinSystem $SystemPDB $SystemPSF $SystemDCD $AtomPDB $AtomPSF SysAtm.$Frame $Frame]; 
+	set SystemAtom [ JoinSystem $SystemPDB $SystemPSF $SystemDCD $AtomPDB $AtomPSF SysAtm.$Frame $Frame];
 	file copy SysAtm.$Frame.pdb ../
 	file copy SysAtm.$Frame.psf ../
 
 	#Header have the parameters of all the grids
 	[ WriteHeader $GridPoints $GridOrigin $GridDeltaX $GridDeltaY $GridDeltaZ $Frame ]; 
-
 } else {
-
+	#Utilize the existing system
 	set SystemAtom SysAtm.${Frame}
-#	file copy ../Part.0/SysAtm.$Frame.pdb ../
-#	file copy ../Part.0/SysAtm.$Frame.psf ../
+
 }
-
-
 
 #Load workspace
 mol new ../$SystemAtom.psf type psf waitfor all;
@@ -98,8 +83,7 @@ set molID [ molinfo top ];
 
 #Separate the ID in each XYZ axes
 #IDx, IDy, IDz start in 0
-#set GridIDx [lindex $GridID 0];				#ID in X
-set GridIDx $PointStart;
+set GridIDx $PointStart;				#ID in X
 set GridIDy [lindex $GridID 1];				#ID in Y
 set GridIDz [lindex $GridID 2];				#ID in Z
 
@@ -134,9 +118,9 @@ set DeltaZz [lindex $GridDeltaZ 2]
 
 
 #Separate the position in each XYZ axes
-#The position will start in the origin
-#set PositionX [lindex $GridOrigin 0];			
-
+#Axis X is utilize to divide the system in units
+#X=100
+#X1 + X2 + X3...X100 = X
 set PositionX [expr ([lindex $GridOrigin 0] + ($GridIDx*$DeltaXx)) ];
 set PositionY [lindex $GridOrigin 1];
 set PositionZ [lindex $GridOrigin 2];
@@ -149,18 +133,13 @@ set RestartZ $PositionZ;
 set Counter1 0
 set Counter2 0
 
-
-
-
-
 #Selection of the atom to calculate energies
 set selPart [ atomselect $molID "name $Atomtype" ];
 
-#dx file
-#	file copy ../CreateDX/Header.dx ../CreateDX/$Output.$CurrentFrame.dx;
+#.dx file
 set FileDX  [ open ../../../CreateDX/Frame.$Frame/$Output.$Frame.P.$PointStart.dx "w" ];	
 
-################ Process #################
+################################# Process #######################################
 #Each time GridIDz = GridPointZ, GridIDz return to 0 and PositionZ restart to origin
 #The grid increase first in Z, then in Y and finally in X axes
 
@@ -267,7 +246,7 @@ close $FileDX
 
 file rename Frame.$Frame.$PointStart.$GridType.log ../
 
-#delete files
+#Delete files
 if { $PointFinish == [lindex $GridPoints 0] } {
 	file delete 
 	set FileFinish [ open ../Finish.log "w" ];
@@ -282,6 +261,3 @@ file delete -force Part.$PointStart
 unset Frame PointStart GridType molID PositionX PositionY PositionZ RestartX RestartY RestartZ Atomtype selPart GridIDx GridIDy GridIDz Counter1 Counter2
 
 exit;
-
-# pmepot -mol $mol -cell {{ 138.539 42.69 -10.819 } { 129.6 0 0 } { 0 108 0 } { 0 0 230.40 } } -grid {144 120 256} -grid 0.9 -dxfile G-electro.dx
-
