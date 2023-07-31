@@ -1,0 +1,35 @@
+#Script to generate grids of each frame
+#Each core will run a point in axe X and all Y,Z
+
+MaxCores 5				#Select the number of core to use
+
+FilePDB solPKM2.pdb			#PDB File
+FilePSF solPKM2.psf			#PSF File
+FileDCD min2PKM2.dcd			#DCD File
+
+Output Trial				#Output
+
+################################################################
+
+StartFrame 1				#Start in Frame 1
+FinishFrame 4				#Select number of frames
+
+GridPoints 				#Number of points in the Grid Box
+14 15 17
+
+PointStart 0				#Start in Point 0; Finish point is (X-1)
+
+GridOrigin 				#Origin of the Grid Box
+-14.23 -98.71 -60.35
+
+GridDeltaX				#Space between each point in X axe
+10.0 0 0
+GridDeltaY				#Space between each point in Y axe
+0 10.0 0
+GridDeltaZ				#Space between each point in Z axe
+0 0 10.0
+
+#Identity of the Grid
+GridType N				#Carbon = C; Nitrogen = N; Oxygen = O; Sulfur = S
+
+
